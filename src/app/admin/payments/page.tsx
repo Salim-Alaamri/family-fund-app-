@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { formatMonthKeyAr, getCurrentMonthKey, getMonthOptionsAr } from '../../../lib/month'
+import { getCurrentMonthKey, getMonthOptionsAr } from '../../../lib/month'
 import { createClient } from '../../../lib/supabase/server'
 import { isAdminUser } from '../../../lib/auth/admin'
+import { PaymentsManagement } from './payments-management'
 
 type PageSearchParams = Record<string, string | string[] | undefined>
 
@@ -39,8 +40,6 @@ export default async function AdminPaymentsPage({
       .select('id, member_id, month_key, amount, invoice_path, note')
       .order('month_key', { ascending: false }),
   ])
-  const memberNameById = new Map((members ?? []).map((member) => [member.id, member.name]))
-
   const message = readParam(sp, 'message')
   const error = readParam(sp, 'error')
 
@@ -131,127 +130,12 @@ export default async function AdminPaymentsPage({
           </form>
         </details>
 
-        <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-right text-xs font-semibold text-gray-600">
-                <tr>
-                  <th className="px-3 py-2">العضو</th>
-                  <th className="px-3 py-2">الشهر</th>
-                  <th className="px-3 py-2">المبلغ</th>
-                  <th className="px-3 py-2">الإيصال</th>
-                  <th className="px-3 py-2">الملاحظة</th>
-                  <th className="px-3 py-2">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(payments ?? []).map((payment) => (
-                  <tr key={payment.id} className="border-t border-gray-200 align-top">
-                    <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">
-                      {memberNameById.get(payment.member_id) || '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                      {formatMonthKeyAr(payment.month_key)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                      {Number(payment.amount).toLocaleString('en-US')} OMR
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2">
-                      {payment.invoice_path ? (
-                        <Link
-                          href={`/api/payments/${payment.id}/invoice`}
-                          target="_blank"
-                          className="text-xs text-blue-600"
-                        >
-                          عرض الإيصال
-                        </Link>
-                      ) : (
-                        <span className="text-xs text-gray-400">لا يوجد إيصال</span>
-                      )}
-                    </td>
-                    <td className="min-w-[140px] px-3 py-2 text-gray-700">
-                      {payment.note?.trim() || '-'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        <details className="rounded-xl border border-gray-200 px-2 py-1">
-                          <summary className="cursor-pointer text-xs font-medium text-blue-600">
-                            تعديل
-                          </summary>
-                          <form
-                            action={`/api/admin/payments/${payment.id}`}
-                            method="post"
-                            encType="multipart/form-data"
-                            className="mt-2 w-52 space-y-2"
-                          >
-                            <input type="hidden" name="_action" value="update" />
-                            <select
-                              name="member_id"
-                              defaultValue={String(payment.member_id)}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            >
-                              {(members ?? []).map((member) => (
-                                <option key={member.id} value={member.id}>
-                                  {member.name}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              name="amount"
-                              type="number"
-                              step="0.01"
-                              defaultValue={String(payment.amount)}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            />
-                            <input
-                              name="month_key"
-                              defaultValue={payment.month_key}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            />
-                            <input
-                              name="invoice"
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png,.webp"
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                            />
-                            <textarea
-                              name="note"
-                              defaultValue={payment.note || ''}
-                              rows={2}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                            />
-                            <button className="w-full rounded-lg bg-blue-600 p-2 text-xs text-white">
-                              حفظ التعديل
-                            </button>
-                          </form>
-                        </details>
-
-                        <details className="rounded-xl border border-red-200 px-2 py-1">
-                          <summary className="cursor-pointer text-xs font-medium text-red-700">
-                            حذف
-                          </summary>
-                          <form
-                            action={`/api/admin/payments/${payment.id}`}
-                            method="post"
-                            className="mt-2 w-32"
-                          >
-                            <input type="hidden" name="_action" value="delete" />
-                            <button className="w-full rounded-lg bg-red-600 p-2 text-xs text-white">
-                              تأكيد الحذف
-                            </button>
-                          </form>
-                        </details>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <PaymentsManagement
+          members={members ?? []}
+          payments={payments ?? []}
+          initialMessage={message}
+          initialError={error}
+        />
       </div>
     </main>
   )

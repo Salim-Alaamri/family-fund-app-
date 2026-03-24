@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 import { isAdminUser } from '../../../lib/auth/admin'
+import { ExpensesManagement } from './expenses-management'
 
 type PageSearchParams = Record<string, string | string[] | undefined>
 
@@ -97,101 +98,11 @@ export default async function AdminExpensesPage({
           </form>
         </details>
 
-        <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-right text-xs font-semibold text-gray-600">
-                <tr>
-                  <th className="px-3 py-2">العنوان</th>
-                  <th className="px-3 py-2">المبلغ</th>
-                  <th className="px-3 py-2">التاريخ</th>
-                  <th className="px-3 py-2">الملاحظة</th>
-                  <th className="px-3 py-2">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(expenses ?? []).map((expense) => (
-                  <tr key={expense.id} className="border-t border-gray-200 align-top">
-                    <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">
-                      {expense.title}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                      {Number(expense.amount).toLocaleString('en-US')} OMR
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                      {expense.expense_date}
-                    </td>
-                    <td className="min-w-[140px] px-3 py-2 text-gray-700">
-                      {expense.note?.trim() || '-'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        <details className="rounded-xl border border-gray-200 px-2 py-1">
-                          <summary className="cursor-pointer text-xs font-medium text-blue-600">
-                            تعديل
-                          </summary>
-                          <form
-                            action={`/api/admin/expenses/${expense.id}`}
-                            method="post"
-                            className="mt-2 w-52 space-y-2"
-                          >
-                            <input type="hidden" name="_action" value="update" />
-                            <input
-                              name="title"
-                              defaultValue={expense.title}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            />
-                            <input
-                              name="amount"
-                              type="number"
-                              step="0.01"
-                              defaultValue={String(expense.amount)}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            />
-                            <input
-                              name="expense_date"
-                              type="date"
-                              defaultValue={expense.expense_date}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                              required
-                            />
-                            <textarea
-                              name="note"
-                              defaultValue={expense.note || ''}
-                              rows={2}
-                              className="w-full rounded-lg border border-gray-200 p-2 text-xs"
-                            />
-                            <button className="w-full rounded-lg bg-blue-600 p-2 text-xs text-white">
-                              حفظ التعديل
-                            </button>
-                          </form>
-                        </details>
-
-                        <details className="rounded-xl border border-red-200 px-2 py-1">
-                          <summary className="cursor-pointer text-xs font-medium text-red-700">
-                            حذف
-                          </summary>
-                          <form
-                            action={`/api/admin/expenses/${expense.id}`}
-                            method="post"
-                            className="mt-2 w-32"
-                          >
-                            <input type="hidden" name="_action" value="delete" />
-                            <button className="w-full rounded-lg bg-red-600 p-2 text-xs text-white">
-                              تأكيد الحذف
-                            </button>
-                          </form>
-                        </details>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <ExpensesManagement
+          expenses={expenses ?? []}
+          initialMessage={message}
+          initialError={error}
+        />
       </div>
     </main>
   )
