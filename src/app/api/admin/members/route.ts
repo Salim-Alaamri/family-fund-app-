@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     if (!name) {
       return NextResponse.redirect(
-        new URL('/admin?member_error=' + encodeURIComponent('الاسم مطلوب'), request.url),
+        new URL('/admin/members?error=' + encodeURIComponent('الاسم مطلوب'), request.url),
         { status: 303 }
       )
     }
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.redirect(
         new URL(
-          '/admin?member_error=' + encodeURIComponent('تعذر إضافة العضو. حاول مرة أخرى.'),
+          '/admin/members?error=' + encodeURIComponent('تعذر إضافة العضو. حاول مرة أخرى.'),
           request.url
         ),
         { status: 303 }
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         '/admin/success?type=member&message=' +
           encodeURIComponent('تمت إضافة العضو بنجاح') +
           '&redirectTo=' +
-          encodeURIComponent('/admin'),
+          encodeURIComponent('/admin/members'),
         request.url
       ),
       { status: 303 }
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.redirect(
       new URL(
-        '/admin?member_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة العضو'),
+        '/admin/members?error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة العضو'),
         request.url
       ),
       { status: 303 }

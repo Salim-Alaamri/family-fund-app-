@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (!memberId || !amount || !monthKey) {
       return NextResponse.redirect(
         new URL(
-          '/admin?payment_error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
+          '/admin/payments?error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
           request.url
         ),
         { status: 303 }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     if (insertError) {
       return NextResponse.redirect(
         new URL(
-          '/admin?payment_error=' + encodeURIComponent('تعذر إضافة الدفعة. حاول مرة أخرى.'),
+          '/admin/payments?error=' + encodeURIComponent('تعذر إضافة الدفعة. حاول مرة أخرى.'),
           request.url
         ),
         { status: 303 }
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         })
         return NextResponse.redirect(
           new URL(
-            '/admin?payment_error=' +
+            '/admin/payments?error=' +
               encodeURIComponent('تعذر رفع الإيصال. تم حفظ الدفعة بدون إيصال.'),
             request.url
           ),
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
         })
         return NextResponse.redirect(
           new URL(
-            '/admin?payment_error=' +
+            '/admin/payments?error=' +
               encodeURIComponent('تمت إضافة الدفعة ولكن تعذر ربط مسار الإيصال.'),
             request.url
           ),
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         '/admin/success?type=payment&message=' +
           encodeURIComponent('تمت إضافة الدفعة بنجاح') +
           '&redirectTo=' +
-          encodeURIComponent('/members'),
+          encodeURIComponent('/admin/payments'),
         request.url
       ),
       { status: 303 }
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.redirect(
       new URL(
-        '/admin?payment_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة الدفعة'),
+        '/admin/payments?error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة الدفعة'),
         request.url
       ),
       { status: 303 }

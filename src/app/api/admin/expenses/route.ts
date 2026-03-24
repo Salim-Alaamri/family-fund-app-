@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     if (!title || !amount || !expenseDate) {
       return NextResponse.redirect(
         new URL(
-          '/admin?expense_error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
+          '/admin/expenses?error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
           request.url
         ),
         { status: 303 }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.redirect(
         new URL(
-          '/admin?expense_error=' + encodeURIComponent('تعذر إضافة المصروف. حاول مرة أخرى.'),
+          '/admin/expenses?error=' + encodeURIComponent('تعذر إضافة المصروف. حاول مرة أخرى.'),
           request.url
         ),
         { status: 303 }
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         '/admin/success?type=expense&message=' +
           encodeURIComponent('تمت إضافة المصروف بنجاح') +
           '&redirectTo=' +
-          encodeURIComponent('/expenses'),
+          encodeURIComponent('/admin/expenses'),
         request.url
       ),
       { status: 303 }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.redirect(
       new URL(
-        '/admin?expense_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة المصروف'),
+        '/admin/expenses?error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة المصروف'),
         request.url
       ),
       { status: 303 }

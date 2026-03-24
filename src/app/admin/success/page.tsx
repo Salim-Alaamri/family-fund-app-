@@ -8,7 +8,14 @@ function pickString(value: string | string[] | undefined) {
 
 function sanitizeRedirectPath(path: string | undefined) {
   if (!path) return '/admin'
-  if (path === '/admin' || path === '/members' || path === '/expenses') {
+  if (
+    path === '/admin' ||
+    path === '/members' ||
+    path === '/expenses' ||
+    path === '/admin/members' ||
+    path === '/admin/payments' ||
+    path === '/admin/expenses'
+  ) {
     return path
   }
   return '/admin'
