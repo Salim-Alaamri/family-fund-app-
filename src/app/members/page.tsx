@@ -89,9 +89,9 @@ export default async function MembersPage({
         <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
           <div className="grid grid-cols-4 gap-2 border-b bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">
             <div>الاسم</div>
-            <div>الشهر</div>
+            <div className="text-[11px]">الشهر</div>
             <div>الحالة</div>
-            <div>الإيصال</div>
+            <div className="text-[11px]">الإيصال</div>
           </div>
 
           {members?.map((member) => {
@@ -112,17 +112,19 @@ export default async function MembersPage({
                   className="absolute inset-0"
                   aria-label={`عرض تفاصيل العضو ${member.name}`}
                 />
-                <div className="truncate text-sm font-semibold text-gray-900 pointer-events-none">
+                <div className="text-sm font-semibold text-gray-900 pointer-events-none">
                   {member.name}
                 </div>
-                <div className="text-sm text-gray-500 pointer-events-none">
+                <div className="text-xs text-gray-500 pointer-events-none">
                   {formatMonthKeyAr(selectedMonth)}
                   {selectedMonthNumber ? ` (${selectedMonthNumber})` : ''}
                 </div>
                 <div className="space-y-1 pointer-events-none">
                   <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                      hasPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    className={`inline-flex rounded-full font-medium ${
+                      hasPaid
+                        ? 'bg-green-100 px-2.5 py-1 text-xs text-green-700'
+                        : 'bg-red-100 px-1.5 py-0 text-[9px] leading-4 text-red-700'
                     }`}
                   >
                     {hasPaid ? 'تم الدفع' : 'لم يتم الدفع'}
@@ -136,7 +138,7 @@ export default async function MembersPage({
                     <Link
                       href={`/api/payments/${monthPayment.id}/invoice`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-600"
                       title="عرض الإيصال"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -145,7 +147,7 @@ export default async function MembersPage({
                       عرض الإيصال
                     </Link>
                   ) : (
-                    <span className="cursor-not-allowed text-sm text-gray-400">
+                    <span className="cursor-not-allowed text-xs text-gray-400">
                       لا يوجد إيصال
                     </span>
                   )}
