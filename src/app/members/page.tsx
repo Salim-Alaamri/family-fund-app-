@@ -48,7 +48,7 @@ export default async function MembersPage({
       )
     `)
     .eq('is_active', true)
-    .order('name', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) {
     return <div>خطأ: {error.message}</div>
