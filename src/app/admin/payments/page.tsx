@@ -55,18 +55,7 @@ export default async function AdminPaymentsPage({
           </div>
         </div>
 
-        {message ? (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {message}
-          </div>
-        ) : null}
-        {error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <details className="group rounded-2xl bg-white p-5 shadow-sm">
+        <details id="add-payment" className="group rounded-2xl bg-white p-4 shadow-sm">
           <summary className="flex cursor-pointer list-none items-center justify-between text-lg font-semibold text-gray-900">
             <span>إضافة دفعة</span>
             <span className="text-sm text-gray-500 transition group-open:rotate-180">⌄</span>

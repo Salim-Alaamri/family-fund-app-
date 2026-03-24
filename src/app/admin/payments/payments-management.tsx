@@ -123,6 +123,9 @@ function EditPaymentModal({
 
 export function PaymentsManagement({ members, payments, initialMessage, initialError }: Props) {
   const [items, setItems] = useState(payments)
+  const [monthFilter, setMonthFilter] = useState('all')
+  const [memberFilter, setMemberFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [topMessage, setTopMessage] = useState(initialMessage || '')
   const [topError, setTopError] = useState(initialError || '')
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -132,6 +135,39 @@ export function PaymentsManagement({ members, payments, initialMessage, initialE
 
   const memberNameById = useMemo(() => new Map(members.map((m) => [m.id, m.name])), [members])
   const paymentById = useMemo(() => new Map(items.map((p) => [p.id, p])), [items])
+  const monthOptions = useMemo(
+    () =>
+      [...new Set(items.map((item) => item.month_key))]
+        .sort((a, b) => b.localeCompare(a))
+        .map((value) => ({ value, label: formatMonthKeyAr(value) })),
+    [items]
+  )
+
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase()
+    return items.filter((item) => {
+      if (monthFilter !== 'all' && item.month_key !== monthFilter) return false
+      if (memberFilter !== 'all' && String(item.member_id) !== memberFilter) return false
+      if (!normalizedSearch) return true
+
+      const memberName = (memberNameById.get(item.member_id) || '').toLowerCase()
+      const monthLabel = formatMonthKeyAr(item.month_key).toLowerCase()
+      const note = (item.note || '').toLowerCase()
+      const amount = String(item.amount)
+
+      return (
+        memberName.includes(normalizedSearch) ||
+        monthLabel.includes(normalizedSearch) ||
+        note.includes(normalizedSearch) ||
+        amount.includes(normalizedSearch)
+      )
+    })
+  }, [items, monthFilter, memberFilter, search, memberNameById])
+
+  const filteredTotalAmount = useMemo(
+    () => filteredItems.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [filteredItems]
+  )
 
   const openModal = (id: number) => {
     const payment = paymentById.get(id)
@@ -229,22 +265,144 @@ export function PaymentsManagement({ members, payments, initialMessage, initialE
         </div>
       ) : null}
 
-      <div className="space-y-3">
-        {items.map((payment) => (
-          <div key={payment.id} className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-base font-semibold text-gray-900">
-              {memberNameById.get(payment.member_id) || '-'}
-            </p>
-            <p className="mt-1 text-sm text-gray-600">
-              {formatMonthKeyAr(payment.month_key)} - {Number(payment.amount).toLocaleString('en-US')} OMR
-            </p>
-            <p className="mt-1 text-xs text-gray-500">{payment.note?.trim() || '-'}</p>
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <select
+            value={monthFilter}
+            onChange={(event) => setMonthFilter(event.target.value)}
+            className="rounded-xl border border-gray-200 p-2.5 text-sm text-gray-900"
+          >
+            <option value="all">كل الشهور</option>
+            {monthOptions.map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            value={memberFilter}
+            onChange={(event) => setMemberFilter(event.target.value)}
+            className="rounded-xl border border-gray-200 p-2.5 text-sm text-gray-900"
+          >
+            <option value="all">كل الأعضاء</option>
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="بحث بالعضو/الشهر/المبلغ"
+            className="rounded-xl border border-gray-200 p-2.5 text-sm text-gray-900 sm:col-span-1"
+          />
+
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">عدد الدفعات المعروضة</p>
+            <p className="mt-1 text-lg font-semibold text-gray-900">{filteredItems.length}</p>
+          </div>
+          <div className="rounded-xl bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">إجمالي المبلغ المعروض</p>
+            <p className="mt-1 text-lg font-semibold text-gray-900">
+              {filteredTotalAmount.toLocaleString('en-US')} OMR
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="hidden overflow-hidden rounded-2xl border bg-white shadow-sm md:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 text-right text-xs font-semibold text-gray-600">
+              <tr>
+                <th className="px-3 py-2">العضو</th>
+                <th className="px-3 py-2">الشهر</th>
+                <th className="px-3 py-2">المبلغ</th>
+                <th className="px-3 py-2">الإيصال</th>
+                <th className="px-3 py-2">الملاحظة</th>
+                <th className="px-3 py-2">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((payment) => (
+                <tr key={payment.id} className="border-t border-gray-200 align-top">
+                  <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">
+                    {memberNameById.get(payment.member_id) || '-'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                    {formatMonthKeyAr(payment.month_key)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                    {Number(payment.amount).toLocaleString('en-US')} OMR
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2">
+                    {payment.invoice_path ? (
+                      <Link
+                        href={`/api/payments/${payment.id}/invoice`}
+                        target="_blank"
+                        className="text-xs text-blue-600"
+                      >
+                        عرض الإيصال
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-gray-400">لا يوجد إيصال</span>
+                    )}
+                  </td>
+                  <td className="max-w-[220px] truncate px-3 py-2 text-gray-700">{payment.note?.trim() || '-'}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => openModal(payment.id)}
+                        className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-blue-600"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePayment(payment.id)}
+                        disabled={busyId === payment.id}
+                        className="rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-700 disabled:opacity-70"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div className="space-y-2 md:hidden">
+        {filteredItems.map((payment) => (
+          <div key={payment.id} className="rounded-xl bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-gray-900">
+                {memberNameById.get(payment.member_id) || '-'}
+              </p>
+              <p className="text-sm font-semibold text-gray-800">
+                {Number(payment.amount).toLocaleString('en-US')} OMR
+              </p>
+            </div>
+            <p className="mt-1 text-xs text-gray-600">{formatMonthKeyAr(payment.month_key)}</p>
+            {payment.note?.trim() ? (
+              <p className="mt-1 text-xs text-gray-500 line-clamp-1">{payment.note.trim()}</p>
+            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => openModal(payment.id)}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-blue-600"
+                className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-blue-600"
               >
                 تعديل
               </button>
@@ -252,7 +410,7 @@ export function PaymentsManagement({ members, payments, initialMessage, initialE
                 type="button"
                 onClick={() => deletePayment(payment.id)}
                 disabled={busyId === payment.id}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-700 disabled:opacity-70"
+                className="rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-700 disabled:opacity-70"
               >
                 حذف
               </button>
@@ -260,12 +418,12 @@ export function PaymentsManagement({ members, payments, initialMessage, initialE
                 <Link
                   href={`/api/payments/${payment.id}/invoice`}
                   target="_blank"
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-blue-600"
+                  className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-blue-600"
                 >
                   عرض الإيصال
                 </Link>
               ) : (
-                <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-400">
+                <span className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-400">
                   لا يوجد إيصال
                 </span>
               )}
