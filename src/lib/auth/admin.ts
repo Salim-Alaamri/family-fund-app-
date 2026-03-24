@@ -10,12 +10,38 @@ export async function getAuthenticatedUserId() {
 }
 
 export async function isAdminUser(userId: string) {
-  const adminSupabase = createAdminClient()
-  const { data } = await adminSupabase
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
     .from('admin_users')
-    .select('user_id')
-    .eq('user_id', userId)
+    .select('id')
+    .eq('id', userId)
     .maybeSingle()
 
-  return Boolean(data)
+  if (error) {
+    console.error('admin_users check failed:', error)
+    return false
+  }
+
+  return Boolean(data?.id)
+}
+
+export type RequireAdminAuthResult =
+  | { ok: true; userId: string }
+  | { ok: false; status: 401 | 403 }
+
+export async function requireAdminAuth(): Promise<RequireAdminAuthResult> {
+  const userId = await getAuthenticatedUserId()
+
+  if (!userId) {
+    return { ok: false, status: 401 }
+  }
+
+  const isAdmin = await isAdminUser(userId)
+
+  if (!isAdmin) {
+    return { ok: false, status: 403 }
+  }
+
+  return { ok: true, userId }
 }

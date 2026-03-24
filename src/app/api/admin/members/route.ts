@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { getAuthenticatedUserId, isAdminUser } from '../../../../lib/auth/admin'
+import { requireAdminAuth } from '../../../../lib/auth/admin'
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) {
-      return NextResponse.redirect(new URL('/admin/login', request.url), { status: 303 })
-    }
-
-    if (!(await isAdminUser(userId))) {
-      return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('غير مصرح لك'), request.url),
-        { status: 303 }
+    const auth = await requireAdminAuth()
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: auth.status === 401 ? 'غير مصادق' : 'غير مصرح' },
+        { status: auth.status }
       )
     }
 
@@ -24,7 +20,7 @@ export async function POST(request: Request) {
 
     if (!name) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('الاسم مطلوب'), request.url), 
+        new URL('/admin?member_error=' + encodeURIComponent('الاسم مطلوب'), request.url),
         { status: 303 }
       )
     }
@@ -40,18 +36,30 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent(error.message), request.url), 
+        new URL(
+          '/admin?member_error=' + encodeURIComponent('تعذر إضافة العضو. حاول مرة أخرى.'),
+          request.url
+        ),
         { status: 303 }
       )
     }
 
     return NextResponse.redirect(
-      new URL('/admin?success=' + encodeURIComponent('تم إضافة العضو'), request.url), 
+      new URL(
+        '/admin/success?type=member&message=' +
+          encodeURIComponent('تمت إضافة العضو بنجاح') +
+          '&redirectTo=' +
+          encodeURIComponent('/admin'),
+        request.url
+      ),
       { status: 303 }
     )
   } catch {
     return NextResponse.redirect(
-      new URL('/admin?error=' + encodeURIComponent('حدث خطأ غير متوقع'), request.url), 
+      new URL(
+        '/admin?member_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة العضو'),
+        request.url
+      ),
       { status: 303 }
     )
   }

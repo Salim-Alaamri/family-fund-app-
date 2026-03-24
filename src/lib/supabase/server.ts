@@ -13,9 +13,16 @@ export async function createClient() {
           return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
+          // In Server Components, Next.js forbids mutating cookies.
+          // Supabase may still try to write refreshed auth cookies here,
+          // so we safely no-op when mutation is not allowed.
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignore: cookie writes will happen in middleware/route handlers.
+          }
         },
       },
     }

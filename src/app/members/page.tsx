@@ -10,6 +10,17 @@ function isSearchParamsPromise(
   return Boolean(value) && typeof value === 'object' && 'then' in value
 }
 
+function getMonthNumberFromKey(monthKey: string) {
+  const monthPart = monthKey.split('-')[1]
+  const monthNumber = Number(monthPart)
+
+  if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+    return ''
+  }
+
+  return String(monthNumber)
+}
+
 export default async function MembersPage({
   searchParams,
 }: {
@@ -21,6 +32,7 @@ export default async function MembersPage({
     : (searchParams ?? {})
   const selectedMonth =
     (typeof sp?.month === 'string' && sp?.month) || getCurrentMonthKey()
+  const selectedMonthNumber = getMonthNumberFromKey(selectedMonth)
   const monthOptions = getMonthOptionsAr(selectedMonth)
 
   const { data: members, error } = await supabase
@@ -31,6 +43,7 @@ export default async function MembersPage({
       payments (
         id,
         month_key,
+        note,
         invoice_path
       )
     `)
@@ -47,7 +60,7 @@ export default async function MembersPage({
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">الأعضاء</h1>
           <Link href="/" className="text-sm text-blue-600">
-            رجوع
+            القائمة الرئيسية
           </Link>
         </div>
 
@@ -86,19 +99,27 @@ export default async function MembersPage({
               (payment: { month_key: string }) => payment.month_key === selectedMonth
             )
             const hasPaid = Boolean(monthPayment)
+            const paymentNote =
+              typeof monthPayment?.note === 'string' ? monthPayment.note.trim() : ''
 
             return (
               <div
                 key={member.id}
-                className="grid grid-cols-4 items-center gap-2 border-b px-4 py-3 last:border-b-0"
+                className="relative grid grid-cols-4 items-center gap-2 border-b px-4 py-3 last:border-b-0 hover:bg-gray-50"
               >
-                <div className="truncate text-sm font-semibold text-gray-900">
+                <Link
+                  href={`/members/${member.id}`}
+                  className="absolute inset-0"
+                  aria-label={`عرض تفاصيل العضو ${member.name}`}
+                />
+                <div className="truncate text-sm font-semibold text-gray-900 pointer-events-none">
                   {member.name}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 pointer-events-none">
                   {formatMonthKeyAr(selectedMonth)}
+                  {selectedMonthNumber ? ` (${selectedMonthNumber})` : ''}
                 </div>
-                <div>
+                <div className="space-y-1 pointer-events-none">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                       hasPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -106,8 +127,11 @@ export default async function MembersPage({
                   >
                     {hasPaid ? 'تم الدفع' : 'لم يتم الدفع'}
                   </span>
+                  {paymentNote ? (
+                    <p className="text-xs text-gray-600">{paymentNote}</p>
+                  ) : null}
                 </div>
-                <div>
+                <div className="relative z-10">
                   {monthPayment?.invoice_path ? (
                     <Link
                       href={`/api/payments/${monthPayment.id}/invoice`}

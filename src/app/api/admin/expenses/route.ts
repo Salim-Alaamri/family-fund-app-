@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { getAuthenticatedUserId, isAdminUser } from '../../../../lib/auth/admin'
+import { requireAdminAuth } from '../../../../lib/auth/admin'
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) {
-      return NextResponse.redirect(new URL('/admin/login', request.url), { status: 303 })
-    }
-
-    if (!(await isAdminUser(userId))) {
-      return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('غير مصرح لك'), request.url),
-        { status: 303 }
+    const auth = await requireAdminAuth()
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: auth.status === 401 ? 'غير مصادق' : 'غير مصرح' },
+        { status: auth.status }
       )
     }
 
@@ -25,7 +21,10 @@ export async function POST(request: Request) {
 
     if (!title || !amount || !expenseDate) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('البيانات المطلوبة ناقصة'), request.url), 
+        new URL(
+          '/admin?expense_error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
+          request.url
+        ),
         { status: 303 }
       )
     }
@@ -41,18 +40,30 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent(error.message), request.url), 
+        new URL(
+          '/admin?expense_error=' + encodeURIComponent('تعذر إضافة المصروف. حاول مرة أخرى.'),
+          request.url
+        ),
         { status: 303 }
       )
     }
 
     return NextResponse.redirect(
-      new URL('/admin?success=' + encodeURIComponent('تم إضافة المصروف'), request.url), 
+      new URL(
+        '/admin/success?type=expense&message=' +
+          encodeURIComponent('تمت إضافة المصروف بنجاح') +
+          '&redirectTo=' +
+          encodeURIComponent('/expenses'),
+        request.url
+      ),
       { status: 303 }
     )
   } catch {
     return NextResponse.redirect(
-      new URL('/admin?error=' + encodeURIComponent('حدث خطأ غير متوقع'), request.url), 
+      new URL(
+        '/admin?expense_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة المصروف'),
+        request.url
+      ),
       { status: 303 }
     )
   }

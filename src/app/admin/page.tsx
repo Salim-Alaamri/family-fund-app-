@@ -1,3 +1,4 @@
+//admin page/admin.tsx
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentMonthKey, getMonthOptionsAr } from '../../lib/month'
@@ -59,8 +60,11 @@ export default async function AdminPage({
     .eq('is_active', true)
     .order('name', { ascending: true })
 
-  const successMessage = typeof sp?.success === 'string' ? sp?.success : undefined
-  const errorMessage = typeof sp?.error === 'string' ? sp?.error : undefined
+  const memberError = typeof sp?.member_error === 'string' ? sp?.member_error : undefined
+  const paymentError =
+    typeof sp?.payment_error === 'string' ? sp?.payment_error : undefined
+  const expenseError =
+    typeof sp?.expense_error === 'string' ? sp?.expense_error : undefined
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-6" dir="rtl">
@@ -72,7 +76,7 @@ export default async function AdminPage({
               href="/"
               className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20"
             >
-              رجوع
+              القائمة الرئيسية
             </Link>
           </div>
           <form action="/api/auth/logout" method="post" className="mt-3">
@@ -82,144 +86,162 @@ export default async function AdminPage({
           </form>
         </div>
 
-        {successMessage ? (
-          <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 shadow-sm">
-            {successMessage}
-          </div>
-        ) : null}
-
-        {errorMessage ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm">
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <section className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">إضافة عضو</h2>
-          <form action="/api/admin/members" method="post" className="space-y-4">
-            <input
-              name="name"
-              placeholder="اسم العضو"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-            />
-            <input
-              name="phone"
-              placeholder="رقم الهاتف (اختياري)"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-            />
-            <textarea
-              name="note"
-              placeholder="ملاحظة"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              rows={3}
-            />
-            <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-              إضافة عضو
-            </button>
-          </form>
-        </section>
-
-        <section className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">إضافة دفعة</h2>
-          <form
-            action="/api/admin/payments"
-            method="post"
-            encType="multipart/form-data"
-            className="space-y-4"
-          >
-            <select
-              name="member_id"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-              defaultValue=""
-            >
-              <option value="" disabled>
-                اختر العضو
-              </option>
-              {members?.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-            <input
-              name="amount"
-              type="number"
-              step="0.01"
-              placeholder="المبلغ"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-            />
-            <select
-              name="month_key"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-              defaultValue={currentMonth}
-            >
-              {monthOptions.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                رفع إيصال (اختياري)
-              </label>
+        <details className="group rounded-2xl bg-white p-5 shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-lg font-semibold text-gray-900">
+            <span>إضافة عضو</span>
+            <span className="text-sm text-gray-500 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="mt-4">
+            <form action="/api/admin/members" method="post" className="space-y-4">
               <input
-                name="invoice"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 file:ml-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+                name="name"
+                placeholder="اسم العضو"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
               />
-            </div>
-            <textarea
-              name="note"
-              placeholder="ملاحظة"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              rows={3}
-            />
-            <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-              إضافة دفعة
-            </button>
-          </form>
-        </section>
+              <input
+                name="phone"
+                placeholder="رقم الهاتف (اختياري)"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+              />
+              <textarea
+                name="note"
+                placeholder="ملاحظة"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                rows={3}
+              />
+              <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                إضافة عضو
+              </button>
+            </form>
+            {memberError ? (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {memberError}
+              </div>
+            ) : null}
+          </div>
+        </details>
 
-        <section className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">إضافة مصروف</h2>
-          <form action="/api/admin/expenses" method="post" className="space-y-4">
-            <input
-              name="title"
-              placeholder="اسم المصروف"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-            />
-            <input
-              name="amount"
-              type="number"
-              step="0.01"
-              placeholder="المبلغ"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-            />
-            <input
-              name="expense_date"
-              type="date"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              required
-            />
-            <textarea
-              name="note"
-              placeholder="ملاحظة"
-              className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
-              rows={3}
-            />
-            <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-              إضافة مصروف
-            </button>
-          </form>
-        </section>
+        <details className="group rounded-2xl bg-white p-5 shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-lg font-semibold text-gray-900">
+            <span>إضافة دفعة</span>
+            <span className="text-sm text-gray-500 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="mt-4">
+            <form
+              action="/api/admin/payments"
+              method="post"
+              encType="multipart/form-data"
+              className="space-y-4"
+            >
+              <select
+                name="member_id"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  اختر العضو
+                </option>
+                {members?.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                name="amount"
+                type="number"
+                step="0.01"
+                placeholder="المبلغ"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+              />
+              <select
+                name="month_key"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+                defaultValue={currentMonth}
+              >
+                {monthOptions.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  رفع إيصال (اختياري)
+                </label>
+                <input
+                  name="invoice"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 file:ml-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+                />
+              </div>
+              <textarea
+                name="note"
+                placeholder="ملاحظة"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                rows={3}
+              />
+              <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                إضافة دفعة
+              </button>
+            </form>
+            {paymentError ? (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {paymentError}
+              </div>
+            ) : null}
+          </div>
+        </details>
+
+        <details className="group rounded-2xl bg-white p-5 shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-lg font-semibold text-gray-900">
+            <span>إضافة مصروف</span>
+            <span className="text-sm text-gray-500 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="mt-4">
+            <form action="/api/admin/expenses" method="post" className="space-y-4">
+              <input
+                name="title"
+                placeholder="اسم المصروف"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+              />
+              <input
+                name="amount"
+                type="number"
+                step="0.01"
+                placeholder="المبلغ"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+              />
+              <input
+                name="expense_date"
+                type="date"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                required
+              />
+              <textarea
+                name="note"
+                placeholder="ملاحظة"
+                className="w-full rounded-xl border border-gray-200 p-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                rows={3}
+              />
+              <button className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                إضافة مصروف
+              </button>
+            </form>
+            {expenseError ? (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {expenseError}
+              </div>
+            ) : null}
+          </div>
+        </details>
       </div>
     </main>
   )

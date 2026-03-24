@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { getAuthenticatedUserId, isAdminUser } from '../../../../lib/auth/admin'
+import { requireAdminAuth } from '../../../../lib/auth/admin'
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) {
-      return NextResponse.redirect(new URL('/admin/login', request.url), { status: 303 })
-    }
-
-    if (!(await isAdminUser(userId))) {
-      return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('غير مصرح لك'), request.url),
-        { status: 303 }
+    const auth = await requireAdminAuth()
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: auth.status === 401 ? 'غير مصادق' : 'غير مصرح' },
+        { status: auth.status }
       )
     }
 
@@ -26,7 +22,10 @@ export async function POST(request: Request) {
 
     if (!memberId || !amount || !monthKey) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent('البيانات المطلوبة ناقصة'), request.url), 
+        new URL(
+          '/admin?payment_error=' + encodeURIComponent('البيانات المطلوبة ناقصة'),
+          request.url
+        ),
         { status: 303 }
       )
     }
@@ -47,7 +46,10 @@ export async function POST(request: Request) {
 
     if (insertError) {
       return NextResponse.redirect(
-        new URL('/admin?error=' + encodeURIComponent(insertError.message), request.url), 
+        new URL(
+          '/admin?payment_error=' + encodeURIComponent('تعذر إضافة الدفعة. حاول مرة أخرى.'),
+          request.url
+        ),
         { status: 303 }
       )
     }
@@ -74,7 +76,11 @@ export async function POST(request: Request) {
           message: uploadError.message,
         })
         return NextResponse.redirect(
-          new URL('/admin?error=' + encodeURIComponent(uploadError.message), request.url), 
+          new URL(
+            '/admin?payment_error=' +
+              encodeURIComponent('تعذر رفع الإيصال. تم حفظ الدفعة بدون إيصال.'),
+            request.url
+          ),
           { status: 303 }
         )
       }
@@ -91,19 +97,32 @@ export async function POST(request: Request) {
           message: updateError.message,
         })
         return NextResponse.redirect(
-          new URL('/admin?error=' + encodeURIComponent(updateError.message), request.url), 
+          new URL(
+            '/admin?payment_error=' +
+              encodeURIComponent('تمت إضافة الدفعة ولكن تعذر ربط مسار الإيصال.'),
+            request.url
+          ),
           { status: 303 }
         )
       }
     }
 
     return NextResponse.redirect(
-      new URL('/admin?success=' + encodeURIComponent('تم إضافة الدفعة'), request.url), 
+      new URL(
+        '/admin/success?type=payment&message=' +
+          encodeURIComponent('تمت إضافة الدفعة بنجاح') +
+          '&redirectTo=' +
+          encodeURIComponent('/members'),
+        request.url
+      ),
       { status: 303 }
     )
   } catch {
     return NextResponse.redirect(
-      new URL('/admin?error=' + encodeURIComponent('حدث خطأ غير متوقع'), request.url), 
+      new URL(
+        '/admin?payment_error=' + encodeURIComponent('حدث خطأ غير متوقع أثناء إضافة الدفعة'),
+        request.url
+      ),
       { status: 303 }
     )
   }
