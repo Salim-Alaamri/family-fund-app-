@@ -43,6 +43,7 @@ export default async function MembersPage({
       payments (
         id,
         month_key,
+        amount,
         note,
         invoice_path
       )
@@ -86,12 +87,13 @@ export default async function MembersPage({
           </div>
         </form>
 
-        <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <div className="grid grid-cols-4 gap-2 border-b bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">
-            <div>الاسم</div>
-            <div className="text-[11px]">الشهر</div>
-            <div>الحالة</div>
-            <div className="text-[11px]">الإيصال</div>
+        <section className="overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
+          <div dir="rtl" className="grid grid-cols-5 border-b border-gray-300 bg-blue-100 px-4 py-3 text-center text-xs font-semibold text-gray-700">
+            <div className="border-l border-gray-300 pr-2 text-right">الاسم</div>
+            <div className="border-l border-gray-300 px-2">المبلغ</div>
+            <div className="border-l border-gray-300 px-2 text-[11px]">الشهر</div>
+            <div className="border-l border-gray-300 px-2">الحالة</div>
+            <div className="px-2 text-[11px]">الإيصال</div>
           </div>
 
           {members?.map((member) => {
@@ -105,25 +107,29 @@ export default async function MembersPage({
             return (
               <div
                 key={member.id}
-                className="relative grid grid-cols-4 items-center gap-2 border-b px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                dir="rtl"
+                className="relative grid grid-cols-5 items-center border-b border-gray-300 px-4 py-3 last:border-b-0 hover:bg-gray-50"
               >
                 <Link
                   href={`/members/${member.id}`}
                   className="absolute inset-0"
                   aria-label={`عرض تفاصيل العضو ${member.name}`}
                 />
-                <div className="text-sm font-semibold text-gray-900 pointer-events-none">
+                <div dir="rtl" className="whitespace-nowrap border-l border-gray-300 pr-2 text-right text-xs font-semibold text-gray-900 pointer-events-none">
                   {member.name}
                 </div>
-                <div className="text-xs text-gray-500 pointer-events-none">
+                <div className="border-l border-gray-300 px-2 text-center text-sm text-gray-700 pointer-events-none">
+                  {monthPayment ? `${Number(monthPayment.amount).toLocaleString('en-US')} OMR` : '-'}
+                </div>
+                <div className="border-l border-gray-300 px-2 text-center text-xs text-gray-500 pointer-events-none">
                   {formatMonthKeyAr(selectedMonth)}
                   {selectedMonthNumber ? ` (${selectedMonthNumber})` : ''}
                 </div>
-                <div className="space-y-1 pointer-events-none">
+                <div className="border-l border-gray-300 px-2 text-center space-y-1 pointer-events-none">
                   <span
                     className={`inline-flex rounded-full font-medium ${
                       hasPaid
-                        ? 'bg-green-100 px-2.5 py-1 text-xs text-green-700'
+                        ? 'bg-green-100 px-2 py-0.5 text-[10px] leading-4 text-green-700'
                         : 'bg-red-100 px-1.5 py-0 text-[9px] leading-4 text-red-700'
                     }`}
                   >
@@ -133,12 +139,12 @@ export default async function MembersPage({
                     <p className="text-xs text-gray-600">{paymentNote}</p>
                   ) : null}
                 </div>
-                <div className="relative z-10">
+                <div className="relative z-10 px-2 text-center">
                   {monthPayment?.invoice_path ? (
                     <Link
                       href={`/api/payments/${monthPayment.id}/invoice`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-600"
+                      className="inline-flex items-center justify-center gap-1 text-[10px] font-medium text-blue-600"
                       title="عرض الإيصال"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -147,7 +153,7 @@ export default async function MembersPage({
                       عرض الإيصال
                     </Link>
                   ) : (
-                    <span className="cursor-not-allowed text-xs text-gray-400">
+                    <span className="cursor-not-allowed text-[10px] text-gray-400">
                       لا يوجد إيصال
                     </span>
                   )}
